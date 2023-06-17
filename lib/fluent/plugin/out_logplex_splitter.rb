@@ -15,7 +15,6 @@ module Fluent
       config_param :tag, :string, default: nil
       config_param :split_pattern, :string, default: '\d+\s<\d+>.+'
       config_param :input_key, :string, default: nil
-      config_param :output_key, :string, default: nil
       config_param :remove_tag_prefix, :string, default: nil
       config_param :remove_tag_suffix, :string, default: nil
       config_param :add_tag_prefix, :string, default: nil
@@ -42,7 +41,7 @@ module Fluent
           message.scan(@split_pattern).each do |message_chunk|
             emit_tag = tag.dup
             emit_record = record.dup
-            record = emit_record.merge(@output_key => message_chunk)
+            record = emit_record.merge(@input_key => message_chunk)
             filter_record(emit_tag, time, record)
             router.emit(emit_tag, time, record)
           end
