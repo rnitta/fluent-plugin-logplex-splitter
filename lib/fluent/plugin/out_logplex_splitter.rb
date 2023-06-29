@@ -45,8 +45,8 @@ module Fluent
             if @ignore_severity_level
               matched = message_chunk.to_s.match(LOGPLEX_LOG_MESSAGE_PREFIX_REGEX)
               if matched
-                severity = (matched[1] % 8).to_i
-                if @ignore_severity_level.to_i >= severity
+                severity = (matched[1]).to_i % 8
+                if @ignore_severity_level.to_i <= severity
                   next
                 end
               end
