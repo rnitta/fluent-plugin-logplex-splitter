@@ -6,6 +6,7 @@ require 'fluent/mixin/rewrite_tag_name'
 module Fluent
   module Plugin
     class LogplexSplitterOutput < Fluent::Plugin::Output
+      LOGPLEX_LOG_MESSAGE_PREFIX_REGEX = /^\d+\s<(\d+)>\d+\s/
       Fluent::Plugin.register_output("logplex_splitter", self)
 
       include Fluent::Mixin::ConfigPlaceholders
@@ -19,6 +20,8 @@ module Fluent
       config_param :remove_tag_suffix, :string, default: nil
       config_param :add_tag_prefix, :string, default: nil
       config_param :add_tag_suffix, :string, default: nil
+      desc 'Ignore severity level from logplex log message. 0(Emergence) ~ 7(Debug)'
+      config_param :ignore_severity_level, :integer, default: nil
 
       helpers :event_emitter
 
@@ -39,6 +42,16 @@ module Fluent
           message = record[@input_key]
 
           message.scan(@split_pattern).each do |message_chunk|
+            if @ignore_severity_level
+              matched = message_chunk.to_s.match(LOGPLEX_LOG_MESSAGE_PREFIX_REGEX)
+              if matched
+                severity = (matched[1] % 8).to_i
+                if @ignore_severity_level.to_i <= severity
+                  next
+                end
+              end
+            end
+
             emit_tag = tag.dup
             emit_record = record.dup
             record = emit_record.merge(@input_key => message_chunk)
